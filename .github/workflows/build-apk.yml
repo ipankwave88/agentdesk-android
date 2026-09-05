@@ -1,0 +1,49 @@
+name: Build AgentDesk Release APK
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout Code
+      uses: actions/checkout@v4
+
+    - name: Set up JDK 17
+      uses: actions/setup-java@v4
+      with:
+        java-version: '17'
+        distribution: 'temurin'
+
+    - name: Setup Gradle
+      uses: gradle/actions/setup-gradle@v3
+
+    - name: Build APK with Gradle
+      run: |
+        gradle build || (chmod +x gradlew 2>/dev/null && ./gradlew assembleRelease) || gradle assembleRelease
+
+    - name: Upload APK Artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: AgentDesk-v2-APK
+        path: app/build/outputs/apk/**/*.apk
+
+    - name: Create GitHub Release
+      uses: softprops/action-gh-release@v2
+      if: startsWith(github.ref, 'refs/tags/') || github.ref == 'refs/heads/main'
+      with:
+        tag_name: v2.0.0-release
+        name: AgentDesk v2.0.0 Native Shell
+        body: |
+          ### AgentDesk v2 — Tri-Agent Mobile ADE (Native Shell Edition)
+          - Fullscreen hardware-accelerated terminal and IDE
+          - Integrated Termius-style virtual keyboard accessory bar
+          - Multi-Agent fleet (Claude Code, OpenCode, Hermes)
+          - Live server dynamic auto-update
+        files: app/build/outputs/apk/**/*.apk
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
