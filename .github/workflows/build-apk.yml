@@ -19,31 +19,35 @@ jobs:
         java-version: '17'
         distribution: 'temurin'
 
-    - name: Setup Gradle
-      uses: gradle/actions/setup-gradle@v3
+    - name: Setup Android SDK
+      uses: android-actions/setup-android@v3
 
-    - name: Build APK with Gradle
+    - name: Generate Gradle Wrapper
       run: |
-        gradle build || (chmod +x gradlew 2>/dev/null && ./gradlew assembleRelease) || gradle assembleRelease
+        gradle wrapper --gradle-version 8.5 || gradle wrapper
+        chmod +x gradlew
+
+    - name: Build APK with Gradle Wrapper
+      run: |
+        ./gradlew assembleDebug --stacktrace
 
     - name: Upload APK Artifact
       uses: actions/upload-artifact@v4
       with:
         name: AgentDesk-v2-APK
-        path: app/build/outputs/apk/**/*.apk
+        path: app/build/outputs/apk/debug/*.apk
 
     - name: Create GitHub Release
       uses: softprops/action-gh-release@v2
-      if: startsWith(github.ref, 'refs/tags/') || github.ref == 'refs/heads/main'
       with:
-        tag_name: v2.0.0-release
+        tag_name: v2.0.0
         name: AgentDesk v2.0.0 Native Shell
         body: |
           ### AgentDesk v2 — Tri-Agent Mobile ADE (Native Shell Edition)
-          - Fullscreen hardware-accelerated terminal and IDE
-          - Integrated Termius-style virtual keyboard accessory bar
+          - Fullscreen terminal & IDE
+          - Integrated Termius accessory keyboard
           - Multi-Agent fleet (Claude Code, OpenCode, Hermes)
           - Live server dynamic auto-update
-        files: app/build/outputs/apk/**/*.apk
+        files: app/build/outputs/apk/debug/*.apk
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
