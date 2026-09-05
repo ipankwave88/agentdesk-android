@@ -1,0 +1,2 @@
+rootProject.name = "AgentDesk"
+include ':app'
